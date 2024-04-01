@@ -12,7 +12,14 @@ export async function createPlot() {
   const response = await fetch(url)
   const json = await response.json()
 
-  const data = Object.groupBy(json.items, ({ entity_id }) => entity_id)
+  // const data = Object.groupBy(json.items, ({ entity_id }) => entity_id)
+
+  const data = json.items.reduce((memo, item) => {
+    memo[item.entity_id] = memo[item.entity_id] ?? []
+    memo[item.entity_id].push(item)
+
+    return memo
+  }, {})
 
   const tempSensorIds = Object.keys(data).filter((sensorId) =>
     sensorId.includes('temp'),
