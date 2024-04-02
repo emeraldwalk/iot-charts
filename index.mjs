@@ -17,9 +17,7 @@ async function fetchData(pageNumber = 1) {
 }
 
 export async function createPlot() {
-  const items = (
-    await Promise.all([1, 2, 3, 4, 5, 6].map(fetchData))
-  ).flat()
+  const items = (await Promise.all([1, 2, 3, 4, 5, 6].map(fetchData))).flat()
 
   // const data = Object.groupBy(json.items, ({ entity_id }) => entity_id)
 
@@ -30,9 +28,11 @@ export async function createPlot() {
     return memo
   }, {})
 
-  const tempSensorIds = Object.keys(data).filter((sensorId) =>
-    sensorId.includes('temp'),
-  )
+  const tempSensorIds = Object.keys(data)
+    .filter((sensorId) => sensorId.includes('temp'))
+    .sort((a, b) =>
+      (SENSOR_LABELS[a] ?? a).localeCompare(SENSOR_LABELS[b] ?? b),
+    )
 
   console.log('Temp sensors:', tempSensorIds)
 
