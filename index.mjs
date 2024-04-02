@@ -5,16 +5,25 @@ const SENSOR_LABELS = {
   'sensor.sonoff_snzb_02d_f1f36efe_temperature': 'Greenhouse Temp',
 }
 
-export async function createPlot() {
-  const url =
-    'https://ball-started.pockethost.io/api/collections/sensor/records?perPage=500&sort=-created'
+async function fetchData(pageNumber = 1) {
+  const url = `https://ball-started.pockethost.io/api/collections/sensor/records?page=${pageNumber}&perPage=500&sort=-created`
 
   const response = await fetch(url)
   const json = await response.json()
 
+  console.log('Data:', json)
+
+  return json.items
+}
+
+export async function createPlot() {
+  const items = (
+    await Promise.all([1, 2, 3, 4, 5, 6].map(fetchData))
+  ).flat()
+
   // const data = Object.groupBy(json.items, ({ entity_id }) => entity_id)
 
-  const data = json.items.reduce((memo, item) => {
+  const data = items.reduce((memo, item) => {
     memo[item.entity_id] = memo[item.entity_id] ?? []
     memo[item.entity_id].push(item)
 
@@ -35,7 +44,7 @@ export async function createPlot() {
     connectgaps: true,
   }))
 
-  console.log('data:', traces)
+  console.log('traces:', traces)
 
   const chartEl = document.getElementById('tester')
   Plotly.newPlot(chartEl, traces, {
