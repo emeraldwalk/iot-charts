@@ -8,7 +8,15 @@ const SENSOR_LABELS = {
 }
 
 async function fetchData(pageNumber = 1) {
+  // const since = new Date()
+  // since.setDate(since.getDate() - 1)
+  // const sinceStr = since.toISOString() // .replace('T', ' ').substring(0, 16) //.split('T')[0]
+  // console.log({ sinceStr })
+
   const url = `https://ball-started.pockethost.io/api/collections/sensor/records?page=${pageNumber}&perPage=500&sort=-created`
+  //&filter=${encodeURIComponent(
+  //   `created>='${sinceStr}'`,
+  // )}`
 
   const response = await fetch(url)
   const json = await response.json()
@@ -49,6 +57,7 @@ export async function createPlot() {
     const minI = d3.minIndex(y)
     const maxI = d3.maxIndex(y)
 
+    const now = { y: y[0] }
     const min = {
       x: x[minI],
       y: y[minI],
@@ -77,7 +86,7 @@ export async function createPlot() {
       },
     )
 
-    cellData[name] = [min.y, max.y, mean.y]
+    cellData[name] = [now.y, min.y, max.y, mean.y]
 
     return {
       x,
@@ -93,6 +102,7 @@ export async function createPlot() {
     header: {
       values: [
         ['<b>Sensors</b>'],
+        ['<b>Now</b>'],
         ['<b>Min</b>'],
         ['<b>Max</b>'],
         ['<b>Avg</b>'],
@@ -104,7 +114,8 @@ export async function createPlot() {
         Object.keys(cellData),
         Object.values(cellData).map((datum) => datum[0]),
         Object.values(cellData).map((datum) => datum[1]),
-        Object.values(cellData).map((datum) => Number(datum[2].toFixed(2))),
+        Object.values(cellData).map((datum) => datum[2]),
+        Object.values(cellData).map((datum) => Number(datum[2].toFixed(3))),
       ],
     },
   }
@@ -120,7 +131,7 @@ export async function createPlot() {
     chartEl,
     traces,
     {
-      margin: { t: 0 },
+      margin: { t: 32, l: 24, r: 24, b: 24 },
       legend: { orientation: 'h' },
       xaxis: {
         range: [start.getTime(), end.getTime()],
@@ -133,7 +144,14 @@ export async function createPlot() {
   )
 
   const tableEl = document.getElementById('table')
-  Plotly.newPlot(tableEl, [tableData], {}, { responsive: true })
+  Plotly.newPlot(
+    tableEl,
+    [tableData],
+    {
+      margin: { t: 10, l: 10, r: 10, b: 10 },
+    },
+    { responsive: true },
+  )
 }
 
 /** @param date {Date} */
