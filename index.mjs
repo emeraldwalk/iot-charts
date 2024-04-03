@@ -1,9 +1,4 @@
-import {
-  min,
-  max,
-  minIndex,
-  maxIndex,
-} from 'https://cdn.jsdelivr.net/npm/d3-array@3/+esm'
+import * as d3 from 'https://cdn.jsdelivr.net/npm/d3-array@3/+esm'
 
 const SENSOR_LABELS = {
   'sensor.atc_fe05_temperature': 'Garage Temp',
@@ -44,40 +39,75 @@ export async function createPlot() {
   console.log('Temp sensors:', tempSensorIds)
 
   const annotations = []
+  const cellData = {}
 
   const traces = tempSensorIds.map((sensorId, i) => {
+    const name = SENSOR_LABELS[sensorId] ?? sensorId
     const x = data[sensorId].map(({ created }) => dateStr(new Date(created)))
     const y = data[sensorId].map(({ data }) => data)
 
-    const minI = minIndex(y)
-    const maxI = maxIndex(y)
+    const minI = d3.minIndex(y)
+    const maxI = d3.maxIndex(y)
 
-    console.log('minmax:', min(y), max(y))
+    const min = {
+      x: x[minI],
+      y: y[minI],
+    }
+    const max = {
+      x: x[maxI],
+      y: y[maxI],
+    }
+    const mean = {
+      y: d3.mean(y),
+    }
 
     annotations.push(
       {
-        x: x[minI],
-        y: y[minI],
-        text: `${y[minI]} (min)`,
+        x: min.x,
+        y: min.y,
+        text: `${min.y} (min)`,
         ax: i * -20,
         // ay: -40,
       },
       {
-        x: x[maxI],
-        y: y[maxI],
-        text: `${y[maxI]} (max)`,
+        x: max.x,
+        y: max.y,
+        text: `${max.y} (max)`,
         ax: i * -20,
       },
     )
 
+    cellData[name] = [min.y, max.y, mean.y]
+
     return {
       x,
       y,
-      name: SENSOR_LABELS[sensorId] ?? sensorId,
+      name,
       mode: 'lines',
       connectgaps: true,
     }
   })
+
+  const tableData = {
+    type: 'table',
+    header: {
+      values: [
+        ['<b>Sensors</b>'],
+        ['<b>Min</b>'],
+        ['<b>Max</b>'],
+        ['<b>Avg</b>'],
+      ],
+    },
+    cells: {
+      align: ['left', 'right', 'right', 'right'],
+      values: [
+        Object.keys(cellData),
+        Object.values(cellData).map((datum) => datum[0]),
+        Object.values(cellData).map((datum) => datum[1]),
+        Object.values(cellData).map((datum) => Number(datum[2].toFixed(2))),
+      ],
+    },
+  }
 
   console.log('traces:', traces)
 
@@ -101,6 +131,9 @@ export async function createPlot() {
     },
     { responsive: true },
   )
+
+  const tableEl = document.getElementById('table')
+  Plotly.newPlot(tableEl, [tableData], {}, { responsive: true })
 }
 
 /** @param date {Date} */
