@@ -1,3 +1,10 @@
+import {
+  min,
+  max,
+  minIndex,
+  maxIndex,
+} from 'https://cdn.jsdelivr.net/npm/d3-array@3/+esm'
+
 const SENSOR_LABELS = {
   'sensor.atc_fe05_temperature': 'Garage Temp',
   'sensor.atc_bb8c_temperature': 'Bunny Temp',
@@ -36,25 +43,64 @@ export async function createPlot() {
 
   console.log('Temp sensors:', tempSensorIds)
 
-  const traces = tempSensorIds.map((sensorId) => ({
-    x: data[sensorId].map(({ created }) => dateStr(new Date(created))),
-    y: data[sensorId].map(({ data }) => data),
-    name: SENSOR_LABELS[sensorId] ?? sensorId,
-    mode: 'lines',
-    connectgaps: true,
-  }))
+  const annotations = []
+
+  const traces = tempSensorIds.map((sensorId, i) => {
+    const x = data[sensorId].map(({ created }) => dateStr(new Date(created)))
+    const y = data[sensorId].map(({ data }) => data)
+
+    const minI = minIndex(y)
+    const maxI = maxIndex(y)
+
+    console.log('minmax:', min(y), max(y))
+
+    annotations.push(
+      {
+        x: x[minI],
+        y: y[minI],
+        text: `${y[minI]} (min)`,
+        ax: i * -20,
+        // ay: -40,
+      },
+      {
+        x: x[maxI],
+        y: y[maxI],
+        text: `${y[maxI]} (max)`,
+        ax: i * -20,
+      },
+    )
+
+    return {
+      x,
+      y,
+      name: SENSOR_LABELS[sensorId] ?? sensorId,
+      mode: 'lines',
+      connectgaps: true,
+    }
+  })
 
   console.log('traces:', traces)
 
-  const chartEl = document.getElementById('tester')
-  Plotly.newPlot(chartEl, traces, {
-    margin: { t: 0 },
-    legend: { orientation: 'h' },
-    xaxis: {
-      tickformat: '%I:%M %p',
+  const end = new Date()
+  const start = new Date(end)
+  start.setHours(start.getHours() - 12)
+
+  const chartEl = document.getElementById('chart')
+  Plotly.newPlot(
+    chartEl,
+    traces,
+    {
+      margin: { t: 0 },
+      legend: { orientation: 'h' },
+      xaxis: {
+        range: [start.getTime(), end.getTime()],
+        tickformat: '%I:%M %p',
+      },
+      // yaxis: { range: [0, 100] },
+      annotations,
     },
-    // yaxis: { range: [0, 100] },
-  })
+    { responsive: true },
+  )
 }
 
 /** @param date {Date} */
