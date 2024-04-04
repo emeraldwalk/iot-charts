@@ -8,28 +8,44 @@ const SENSOR_LABELS = {
 }
 
 async function fetchData(pageNumber = 1) {
-  // const since = new Date()
-  // since.setDate(since.getDate() - 1)
-  // const sinceStr = since.toISOString() // .replace('T', ' ').substring(0, 16) //.split('T')[0]
-  // console.log({ sinceStr })
+  const now = new Date()
+  const since = new Date(now)
+  since.setHours(since.getHours() - 24)
+  const sinceStr = since.toISOString().replace('T', ' ') // .substring(0, 16) //.split('T')[0]
+  console.log({ now: now.toISOString(), sinceStr })
 
-  const url = `https://ball-started.pockethost.io/api/collections/sensor/records?page=${pageNumber}&perPage=500&sort=-created`
-  //&filter=${encodeURIComponent(
-  //   `created>='${sinceStr}'`,
-  // )}`
+  const url = `https://ball-started.pockethost.io/api/collections/sensor/records?page=${pageNumber}&perPage=500&sort=-created&filter=${encodeURIComponent(
+    `created>='${sinceStr}'`,
+  )}`
 
   const response = await fetch(url)
   const json = await response.json()
 
   console.log('Data:', json)
 
-  return json.items
+  return json
+}
+
+function* range(start, end) {
+  for (let i = start; i <= end; ++i) {
+    yield i
+  }
 }
 
 export async function createPlot() {
-  const items = (await Promise.all([1, 2, 3, 4, 5, 6].map(fetchData))).flat()
+  const { items, totalPages } = await fetchData(1)
+  const maxPages = 12
 
-  // const data = Object.groupBy(json.items, ({ entity_id }) => entity_id)
+  // Load remaining pages
+  items.push(
+    ...(
+      await Promise.all(
+        [...range(2, Math.min(maxPages, totalPages))].map(fetchData),
+      )
+    )
+      .map((datum) => datum.items)
+      .flat(),
+  )
 
   const data = items.reduce((memo, item) => {
     memo[item.entity_id] = memo[item.entity_id] ?? []
@@ -131,6 +147,7 @@ export async function createPlot() {
     chartEl,
     traces,
     {
+      dragmode: 'pan',
       margin: { t: 32, l: 24, r: 24, b: 24 },
       legend: { orientation: 'h' },
       xaxis: {

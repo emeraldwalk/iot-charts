@@ -1,7 +1,23 @@
+body {
+  margin: 0;
+}
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: end;
+}
 .chart {
-  width: 100vw;
+  width: 100%;
   height: 50vh;
 }
 .table {
   height: 300px;
+  width: 100%;
+}
+.button-link {
+  color: #555;
+  font-size: 3rem;
+  line-height: 2rem;
+  margin-right: 10px;
+  text-decoration: none;
 }
