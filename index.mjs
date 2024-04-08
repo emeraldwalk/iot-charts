@@ -132,7 +132,7 @@ export async function createPlot() {
         Object.values(cellData).map((datum) => datum[0]),
         Object.values(cellData).map((datum) => datum[1]),
         Object.values(cellData).map((datum) => datum[2]),
-        Object.values(cellData).map((datum) => Number(datum[2].toFixed(3))),
+        Object.values(cellData).map((datum) => Number(datum[3].toFixed(2))),
       ],
     },
   }
