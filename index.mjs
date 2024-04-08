@@ -8,6 +8,20 @@ const SENSOR_LABELS = {
   'sensor.atc_971e_temperature': 'Shed Temp (inside)',
 }
 
+// copy of Plotly default colorway
+const DEFAULT_COLORWAY = [
+  '#1f77b4',
+  '#ff7f0e',
+  '#2ca02c',
+  '#d62728',
+  '#9467bd',
+  '#8c564b',
+  '#e377c2',
+  '#7f7f7f',
+  '#bcbd22',
+  '#17becf',
+]
+
 async function fetchData(pageNumber = 1) {
   const now = new Date()
   const since = new Date(now)
@@ -66,53 +80,73 @@ export async function createPlot() {
   const annotations = []
   const cellData = {}
 
-  const traces = tempSensorIds.map((sensorId, i) => {
-    const name = SENSOR_LABELS[sensorId] ?? sensorId
-    const x = data[sensorId].map(({ created }) => dateStr(new Date(created)))
-    const y = data[sensorId].map(({ data }) => data)
+  const traces = tempSensorIds
+    .map((sensorId, i) => {
+      const name = SENSOR_LABELS[sensorId] ?? sensorId
+      const x = data[sensorId].map(({ created }) => dateStr(new Date(created)))
+      const y = data[sensorId].map(({ data }) => data)
 
-    const minI = d3.minIndex(y)
-    const maxI = d3.maxIndex(y)
+      const minI = d3.minIndex(y)
+      const maxI = d3.maxIndex(y)
 
-    const now = { y: y[0] }
-    const min = {
-      x: x[minI],
-      y: y[minI],
-    }
-    const max = {
-      x: x[maxI],
-      y: y[maxI],
-    }
-    const mean = {
-      y: d3.mean(y),
-    }
+      const now = { y: y[0] }
+      const min = {
+        x: x[minI],
+        y: y[minI],
+      }
+      const max = {
+        x: x[maxI],
+        y: y[maxI],
+      }
+      const mean = {
+        y: d3.mean(y),
+      }
 
-    annotations.push(
-      {
-        x: min.x,
-        y: min.y,
-        text: `${min.y} (min)`,
-        ax: i * -20,
-        // ay: -40,
-      },
-      {
-        x: max.x,
-        y: max.y,
-        text: `${max.y} (max)`,
-        ax: i * -20,
-      },
-    )
+      annotations.push(
+        {
+          x: min.x,
+          y: min.y,
+          text: `${min.y} (min)`,
+          ax: i * -20,
+          // ay: -40,
+        },
+        {
+          x: max.x,
+          y: max.y,
+          text: `${max.y} (max)`,
+          ax: i * -20,
+        },
+      )
 
-    cellData[name] = [now.y, min.y, max.y, mean.y]
+      cellData[name] = [now.y, min.y, max.y, mean.y]
 
-    return {
-      x,
-      y,
-      name,
-      mode: 'lines',
-      connectgaps: true,
-    }
-  })
+      return [
+        {
+          x,
+          y,
+          name,
+          mode: 'lines',
+          connectgaps: true,
+          line: {
+            color: DEFAULT_COLORWAY[i],
+            width: 1,
+          },
+        },
+        // {
+        //   x: [x[0], x.at(-1)],
+        //   y: [max.y, max.y],
+        //   name,
+        //   mode: 'lines',
+        //   showlegend: false,
+        //   line: {
+        //     color: DEFAULT_COLORWAY[i],
+        //     dash: 'dashdot',
+        //     width: 1,
+        //   },
+        // },
+      ]
+    })
+    .flat()
 
   const tableData = {
     type: 'table',
