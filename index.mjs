@@ -5,6 +5,7 @@ const SENSOR_LABELS = {
   'sensor.atc_bb8c_temperature': 'Bunny Temp',
   'sensor.blue1dht22temp': 'Shed Temp (outside)',
   'sensor.sonoff_snzb_02d_f1f36efe_temperature': 'Greenhouse Temp',
+  'sensor.atc_971e_temperature': 'Shed Temp (inside)',
 }
 
 async function fetchData(pageNumber = 1) {
