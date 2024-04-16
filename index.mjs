@@ -1,12 +1,12 @@
 import * as d3 from 'https://cdn.jsdelivr.net/npm/d3-array@3/+esm'
 
-const SENSOR_LABELS = {
-  'sensor.atc_fe05_temperature': 'Garage Temp',
-  'sensor.atc_bb8c_temperature': 'Bunny Temp',
-  'sensor.blue1dht22temp': 'Shed Temp (outside)',
-  'sensor.sonoff_snzb_02d_f1f36efe_temperature': 'Greenhouse Temp',
-  'sensor.atc_971e_temperature': 'Shed Temp (inside)',
-}
+// const SENSOR_LABELS = {
+// 'sensor.atc_fe05_temperature': 'Garage Temp',
+// 'sensor.atc_bb8c_temperature': 'Bunny Temp',
+// 'sensor.blue1dht22temp': 'Shed Temp (outside)',
+// 'sensor.sonoff_snzb_02d_f1f36efe_temperature': 'Greenhouse Temp',
+// 'sensor.atc_971e_temperature': 'Shed Temp (inside)',
+// }
 
 // copy of Plotly default colorway
 const DEFAULT_COLORWAY = [
@@ -63,28 +63,27 @@ export async function createPlot() {
   )
 
   const data = items.reduce((memo, item) => {
-    memo[item.entity_id] = memo[item.entity_id] ?? []
-    memo[item.entity_id].push(item)
+    const key = item.display ?? item.entity_id
+    memo[key] = memo[key] ?? []
+    memo[key].push(item)
 
     return memo
   }, {})
 
-  const tempSensorIds = Object.keys(data)
-    .filter((sensorId) => sensorId.includes('temp'))
-    .sort((a, b) =>
-      (SENSOR_LABELS[a] ?? a).localeCompare(SENSOR_LABELS[b] ?? b),
-    )
+  const tempSensorKeys = Object.keys(data)
+    .filter((sensorKey) => sensorKey.toLowerCase().includes('temp'))
+    .sort((a, b) => a.localeCompare(b))
 
-  console.log('Temp sensors:', tempSensorIds)
+  console.log('Temp sensors:', tempSensorKeys)
 
   const annotations = []
   const cellData = {}
 
-  const traces = tempSensorIds
-    .map((sensorId, i) => {
-      const name = SENSOR_LABELS[sensorId] ?? sensorId
-      const x = data[sensorId].map(({ created }) => dateStr(new Date(created)))
-      const y = data[sensorId].map(({ data }) => data)
+  const traces = tempSensorKeys
+    .map((sensorKey, i) => {
+      const name = sensorKey
+      const x = data[sensorKey].map(({ created }) => dateStr(new Date(created)))
+      const y = data[sensorKey].map(({ data }) => data)
 
       const minI = d3.minIndex(y)
       const maxI = d3.maxIndex(y)
